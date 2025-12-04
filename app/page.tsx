@@ -496,11 +496,35 @@ export default function ReplayCasterAnime() {
 
   // Download share image
   const downloadImage = useCallback(() => {
-    if (!shareImageUrl) return;
-    const link = document.createElement("a");
-    link.download = `replaycaster-2025-${context?.user?.username || "share"}.png`;
-    link.href = shareImageUrl;
-    link.click();
+    if (!shareImageUrl) {
+      console.error("No image URL available");
+      return;
+    }
+    
+    try {
+      // Method 1: Direct download via data URL
+      const link = document.createElement("a");
+      link.download = `replaycaster-2025-${context?.user?.username || "share"}.png`;
+      link.href = shareImageUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log("Download initiated successfully");
+    } catch (error) {
+      console.error("Download failed:", error);
+      
+      // Method 2: Fallback - Open in new tab
+      try {
+        const newTab = window.open(shareImageUrl, "_blank");
+        if (!newTab) {
+          alert("Please allow pop-ups to download the image");
+        }
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        alert("Unable to download image. Please try again.");
+      }
+    }
   }, [shareImageUrl, context]);
 
   // Share to Warpcast

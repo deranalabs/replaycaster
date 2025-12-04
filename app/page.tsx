@@ -937,22 +937,22 @@ export default function ReplayCasterAnime() {
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                transition={{ delay: 0.8, type: "spring", stiffness: 300 }}
+                whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(0, 212, 255, 0.5)" }}
+                whileTap={{ scale: 0.95 }}
                 onClick={generateShareImage}
                 disabled={isGenerating}
-                className="w-full mt-4 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 disabled:opacity-70"
+                className="w-full mt-6 py-3 sm:py-4 bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 rounded-xl font-bold text-white text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 border border-cyan-300/30 hover:border-cyan-300/60"
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 size={20} className="animate-spin" />
-                    Generating...
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Generating...</span>
                   </>
                 ) : (
                   <>
-                    <Share2 size={20} />
-                    Share Your Story
+                    <Share2 size={18} />
+                    <span>Share Your Story</span>
                   </>
                 )}
               </motion.button>

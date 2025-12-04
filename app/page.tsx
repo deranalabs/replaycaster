@@ -62,6 +62,104 @@ interface UserStats {
 }
 
 // ============================================================================
+// DIALOGUE TEMPLATES - Personalized & Randomized
+// ============================================================================
+interface DialogueTemplate {
+  base: string;
+  variants: string[];
+  dynamic?: (stats: UserStats) => string;
+}
+
+const dialogueTemplates: Record<string, DialogueTemplate> = {
+  awakening: {
+    base: "In the year 2025, among millions of voices in the decentralized cosmos...",
+    variants: [
+      (stats: UserStats) => `You are in the **${stats.percentile}** with **${stats.totalCasts}** casts.`,
+      (stats: UserStats) => `Your presence resonates - **${stats.totalCasts}** casts, **${stats.followerCount}** followers.`,
+      (stats: UserStats) => `Among the elite **${stats.percentile}**, you've made your mark.`,
+    ] as any,
+    dynamic: (stats) => `You emerged as **${stats.percentile}** - a force to be reckoned with.`
+  },
+  journey: {
+    base: "Every wanderer finds a place to call home. Your path led you here...",
+    variants: [
+      (stats: UserStats) => `Your sanctuary is **/${stats.topChannel.id}** - **${stats.topChannel.castsInChannel}** moments shared.`,
+      (stats: UserStats) => `In **/${stats.topChannel.id}**, you've found your tribe - **${stats.topChannel.castsInChannel}** casts deep.`,
+      (stats: UserStats) => `**/${stats.topChannel.id}** is where your voice matters most - **${stats.topChannel.castsInChannel}** times over.`,
+    ] as any,
+    dynamic: (stats) => `Your home is **/${stats.topChannel.id}** with **${stats.topChannel.castsInChannel}** casts.`
+  },
+  voice: {
+    base: "Your words echoed across the network.",
+    variants: [
+      (stats: UserStats) => `**${stats.topCast.likes}** hearts resonated with your most powerful message.`,
+      (stats: UserStats) => `Your voice reached **${stats.topCast.likes}** souls - **${stats.topCast.recasts}** amplified it further.`,
+      (stats: UserStats) => `One cast, **${stats.topCast.likes}** connections made. This is your legacy.`,
+    ] as any,
+    dynamic: (stats) => `Your words reached **${stats.topCast.likes}** hearts.`
+  },
+  nakama: {
+    base: "No hero walks alone. You found your companions in the digital realm...",
+    variants: [
+      (stats: UserStats) => `**@${stats.closestFriend.username}** - your closest ally. **${stats.closestFriend.interactionCount}** conversations that matter.`,
+      (stats: UserStats) => `In **@${stats.closestFriend.username}**, you found your nakama. **${stats.closestFriend.interactionCount}** moments of connection.`,
+      (stats: UserStats) => `**@${stats.closestFriend.username}** knows you best - **${stats.closestFriend.interactionCount}** exchanges of trust.`,
+    ] as any,
+    dynamic: (stats) => `Your closest ally is **@${stats.closestFriend.username}** - **${stats.closestFriend.interactionCount}** conversations deep.`
+  },
+  power: {
+    base: "Your generosity knows no bounds.",
+    variants: [
+      (stats: UserStats) => `**${stats.followerCount}** followers trust your vision. You follow **${stats.followingCount}** builders.`,
+      (stats: UserStats) => `Your influence spans **${stats.followerCount}** connections. You're connected to **${stats.followingCount}** minds.`,
+      (stats: UserStats) => `**${stats.followerCount}** believe in you. You believe in **${stats.followingCount}** others.`,
+    ] as any,
+    dynamic: (stats) => `**${stats.followerCount}** followers, **${stats.followingCount}** following - your network is your power.`
+  },
+  persona: {
+    base: "After all your adventures, this is who you truly are...",
+    variants: [
+      (stats: UserStats) => `You are **${stats.persona}** - ${stats.bio || "forever building, forever learning."}`,
+      (stats: UserStats) => `**${stats.persona}** is your essence. ${stats.bio || "Your story continues..."}`,
+      (stats: UserStats) => `The world knows you as **${stats.persona}**. ${stats.bio || "And that's just the beginning."}`,
+    ] as any,
+    dynamic: (stats) => `You are **${stats.persona}** - ${stats.bio || "a force in the Farcaster ecosystem."}`
+  }
+};
+
+// Seeded random function for deterministic randomization per user
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
+// Get personalized dialogue
+const getPersonalizedDialogue = (
+  chapterId: string,
+  stats: UserStats | null,
+  seed: number = 0
+): string => {
+  const template = dialogueTemplates[chapterId];
+  if (!template) return "";
+
+  if (!stats) return template.base;
+
+  // Use dynamic if available
+  if (template.dynamic) {
+    return template.dynamic(stats);
+  }
+
+  // Pick variant based on seeded random
+  const variantIndex = Math.floor(seededRandom(seed + stats.fid) * template.variants.length);
+  const variant = template.variants[variantIndex] as any;
+
+  if (typeof variant === "function") {
+    return (variant as (stats: UserStats) => string)(stats);
+  }
+  return String(variant);
+};
+
+// ============================================================================
 // SLIDE DATA - The Farcaster 6 (Visual Novel Chapters)
 // ============================================================================
 interface SlideData {
@@ -90,7 +188,7 @@ const generateSlidesData = (stats: UserStats | null): SlideData[] => [
     titleJp: "目覚め",
     background: "/images/bg-intro.png",
     mainStat: stats?.percentile || "Top 5%",
-    dialogue: "In the year 2025, among millions of voices in the decentralized cosmos...",
+    dialogue: getPersonalizedDialogue("awakening", stats, 1),
     subText: stats ? `${stats.totalCasts} casts and counting. You emerged as one of the most active.` : "You emerged as one of the most active casters.",
     icon: Trophy,
     overlay: "from-indigo-900/60 via-transparent to-purple-900/40",
@@ -106,7 +204,7 @@ const generateSlidesData = (stats: UserStats | null): SlideData[] => [
     titleJp: "旅路",
     background: "/images/bg-channel.png",
     mainStat: stats?.topChannel?.id ? `/${stats.topChannel.id}` : "/base",
-    dialogue: "Every wanderer finds a place to call home. Your path led you here...",
+    dialogue: getPersonalizedDialogue("journey", stats, 2),
     subText: stats?.topChannel ? `${stats.topChannel.castsInChannel} casts in your favorite channel.` : "420 casts in your favorite channel.",
     icon: Hash,
     overlay: "from-orange-900/50 via-transparent to-rose-900/40",
@@ -122,7 +220,7 @@ const generateSlidesData = (stats: UserStats | null): SlideData[] => [
     titleJp: "声",
     background: "/images/bg-cast.png",
     mainStat: stats?.topCast?.likes ? stats.topCast.likes.toLocaleString() : "892",
-    dialogue: stats?.topCast?.text ? `"${stats.topCast.text}"` : '"Just deployed my first Frame on Base! The UX is insane. 🚀"',
+    dialogue: getPersonalizedDialogue("voice", stats, 3),
     subText: "Your words echoed across the network.",
     icon: Star,
     overlay: "from-emerald-900/50 via-transparent to-teal-900/40",
@@ -138,7 +236,7 @@ const generateSlidesData = (stats: UserStats | null): SlideData[] => [
     titleJp: "仲間",
     background: "/images/bg-squad.png",
     mainStat: stats?.closestFriend?.username ? `@${stats.closestFriend.username}` : "@dwr",
-    dialogue: "No hero walks alone. You found your companions in the digital realm...",
+    dialogue: getPersonalizedDialogue("nakama", stats, 4),
     subText: stats?.closestFriend ? `${stats.closestFriend.interactionCount} conversations with your closest ally.` : "45 conversations with your closest ally.",
     icon: Users,
     overlay: "from-blue-900/50 via-transparent to-cyan-900/40",
@@ -154,7 +252,7 @@ const generateSlidesData = (stats: UserStats | null): SlideData[] => [
     titleJp: "力",
     background: "/images/bg-degen.png",
     mainStat: stats?.followerCount ? stats.followerCount.toLocaleString() : "69,420",
-    dialogue: stats ? `With ${stats.followerCount.toLocaleString()} followers, your influence grows stronger...` : "Your generosity knows no bounds. The $DEGEN flows through you...",
+    dialogue: getPersonalizedDialogue("power", stats, 5),
     subText: stats ? `Following ${stats.followingCount.toLocaleString()} builders across the realm.` : "Tipped to creators across the realm.",
     icon: Zap,
     overlay: "from-violet-900/70 via-fuchsia-900/30 to-purple-900/50",
@@ -170,7 +268,7 @@ const generateSlidesData = (stats: UserStats | null): SlideData[] => [
     titleJp: "本性",
     background: "/images/bg-persona.png",
     mainStat: stats?.persona || "The Builder",
-    dialogue: "After all your adventures, this is who you truly are...",
+    dialogue: getPersonalizedDialogue("persona", stats, 6),
     subText: stats?.bio?.slice(0, 60) || "Always shipping, rarely sleeping.",
     icon: Crown,
     overlay: "from-rose-900/50 via-transparent to-amber-900/40",

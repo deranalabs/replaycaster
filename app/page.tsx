@@ -416,25 +416,25 @@ export default function ReplayCasterAnime() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw profile picture (circular, centered with glow)
-      const pfpSize = 380;
+      // Draw profile picture (FULL CANVAS - circular, centered)
+      const pfpSize = 900;
       const pfpX = (canvas.width - pfpSize) / 2;
-      const pfpY = 220;
-      const pfpCenterX = pfpX + pfpSize / 2;
-      const pfpCenterY = pfpY + pfpSize / 2;
+      const pfpY = (canvas.height - pfpSize) / 2;
+      const pfpCenterX = canvas.width / 2;
+      const pfpCenterY = canvas.height / 2;
       
       // Draw glow effect (multiple circles)
-      ctx.fillStyle = "rgba(0, 212, 255, 0.15)";
+      ctx.fillStyle = "rgba(0, 212, 255, 0.2)";
       ctx.beginPath();
-      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2 + 20, 0, Math.PI * 2);
+      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2 + 30, 0, Math.PI * 2);
       ctx.fill();
       
-      ctx.fillStyle = "rgba(0, 212, 255, 0.08)";
+      ctx.fillStyle = "rgba(0, 212, 255, 0.1)";
       ctx.beginPath();
-      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2 + 40, 0, Math.PI * 2);
+      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2 + 60, 0, Math.PI * 2);
       ctx.fill();
       
-      // Draw profile picture with clip
+      // Draw profile picture with clip (FULL CIRCLE)
       ctx.save();
       ctx.beginPath();
       ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2, 0, Math.PI * 2);
@@ -444,14 +444,23 @@ export default function ReplayCasterAnime() {
       ctx.restore();
       
       // Draw border around PFP
-      ctx.strokeStyle = "rgba(0, 212, 255, 0.6)";
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(0, 212, 255, 0.8)";
+      ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2, 0, Math.PI * 2);
       ctx.stroke();
 
       // Draw twibbon overlay (full canvas)
       ctx.drawImage(twibbon, 0, 0, canvas.width, canvas.height);
+      
+      // Draw semi-transparent dark overlay at bottom for text readability
+      const overlayHeight = 280;
+      const overlayGradient = ctx.createLinearGradient(0, canvas.height - overlayHeight, 0, canvas.height);
+      overlayGradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+      overlayGradient.addColorStop(0.3, "rgba(0, 0, 0, 0.4)");
+      overlayGradient.addColorStop(1, "rgba(0, 0, 0, 0.7)");
+      ctx.fillStyle = overlayGradient;
+      ctx.fillRect(0, canvas.height - overlayHeight, canvas.width, overlayHeight);
 
       // Add username text
       const username = context?.user?.username || "farcaster_user";

@@ -416,18 +416,39 @@ export default function ReplayCasterAnime() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw profile picture (circular, centered)
-      const pfpSize = 400;
+      // Draw profile picture (circular, centered with glow)
+      const pfpSize = 380;
       const pfpX = (canvas.width - pfpSize) / 2;
-      const pfpY = 200;
+      const pfpY = 220;
+      const pfpCenterX = pfpX + pfpSize / 2;
+      const pfpCenterY = pfpY + pfpSize / 2;
       
+      // Draw glow effect (multiple circles)
+      ctx.fillStyle = "rgba(0, 212, 255, 0.15)";
+      ctx.beginPath();
+      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2 + 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = "rgba(0, 212, 255, 0.08)";
+      ctx.beginPath();
+      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2 + 40, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw profile picture with clip
       ctx.save();
       ctx.beginPath();
-      ctx.arc(pfpX + pfpSize / 2, pfpY + pfpSize / 2, pfpSize / 2, 0, Math.PI * 2);
+      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2, 0, Math.PI * 2);
       ctx.closePath();
       ctx.clip();
       ctx.drawImage(pfp, pfpX, pfpY, pfpSize, pfpSize);
       ctx.restore();
+      
+      // Draw border around PFP
+      ctx.strokeStyle = "rgba(0, 212, 255, 0.6)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(pfpCenterX, pfpCenterY, pfpSize / 2, 0, Math.PI * 2);
+      ctx.stroke();
 
       // Draw twibbon overlay (full canvas)
       ctx.drawImage(twibbon, 0, 0, canvas.width, canvas.height);

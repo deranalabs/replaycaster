@@ -1,0 +1,22 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaW...",
+    "payload": "eyJkb...",
+    "signature": "MHhl..."
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Farcaster Replay 2025",
+    "iconUrl": "https://farcaster-replay.vercel.app/icon.png",
+    "homeUrl": "https://farcaster-replay.vercel.app",
+    "imageUrl": "https://farcaster-replay.vercel.app/og-image.png",
+    "buttonTitle": "▶ Play Replay",
+    "splashImageUrl": "https://farcaster-replay.vercel.app/splash.png",
+    "splashBackgroundColor": "#050505",
+    "subtitle": "Your 2025 Farcaster journey",
+    "description": "A cinematic visual novel experience showcasing your Farcaster year - stats, top casts, favorite channels, and your unique persona.",
+    "screenshotUrls": [],
+    "category": "entertainment",
+    "tags": ["wrapped", "stats", "2025", "replay", "visual-novel"]
+  }
+}

@@ -1,17 +1,17 @@
 {
   "accountAssociation": {
-    "header": "eyJmaW...",
-    "payload": "eyJkb...",
-    "signature": "MHhl..."
+    "header": "eyJmaWQiOjIzOTk5MiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweGViNGM4M0YyYTU0MkY1MkYxMmI5MUZkQTY0MTYxNDQ0NjhGNjI4YTEifQ",
+    "payload": "eyJkb21haW4iOiJmYXJjYXN0ZXItcmVwbGF5LnZlcmNlbC5hcHAifQ",
+    "signature": "ld1wM6KdMnGX8mQ+euNVvdL+JRtg4nL0I1AOz+hx2SdCvQLCEYSELWxhrth2qoL8wXOl769ITeDXjclsVMzPYBw="
   },
   "miniapp": {
     "version": "1",
     "name": "Farcaster Replay 2025",
-    "iconUrl": "https://farcaster-replay.vercel.app/icon.png",
+    "iconUrl": "https://farcaster-replay.vercel.app/replaycaster-logo.png",
     "homeUrl": "https://farcaster-replay.vercel.app",
     "imageUrl": "https://farcaster-replay.vercel.app/og-image.png",
     "buttonTitle": "▶ Play Replay",
-    "splashImageUrl": "https://farcaster-replay.vercel.app/splash.png",
+    "splashImageUrl": "https://farcaster-replay.vercel.app/replaycaster-logo.png",
     "splashBackgroundColor": "#050505",
     "subtitle": "Your 2025 Farcaster journey",
     "description": "A cinematic visual novel experience showcasing your Farcaster year - stats, top casts, favorite channels, and your unique persona.",

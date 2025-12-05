@@ -3,7 +3,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import sdk from "@farcaster/frame-sdk";
 import { motion, AnimatePresence } from "framer-motion";
-import { Share2, Heart, Zap, Play, Crown, Users, Hash, Star, Trophy, Download, X, Loader2 } from "lucide-react";
+import { Share2, Heart, Zap, Play, Crown, Users, Hash, Star, Trophy, Download, X, Loader2, Volume2, VolumeX } from "lucide-react";
+import { TypewriterText } from "@/app/components/TypewriterText";
+import { generateSlidesData } from "@/app/lib/slides";
+import { playSound } from "@/app/lib/sounds";
+import { UserStats, SlideData } from "@/app/types";
 
 // ============================================================================
 // FONTS - Anime Style Typography
@@ -42,284 +46,6 @@ const fontStyle = `
 `;
 
 // ============================================================================
-// USER STATS INTERFACE
-// ============================================================================
-interface UserStats {
-  fid: number;
-  username: string;
-  displayName: string;
-  pfpUrl: string;
-  bio: string;
-  followerCount: number;
-  followingCount: number;
-  totalCasts: number;
-  totalLikes: number;
-  topChannel: { id: string; name: string; castsInChannel: number };
-  topCast: { text: string; likes: number; recasts: number; hash: string };
-  closestFriend: { fid: number; username: string; displayName: string; pfpUrl: string; interactionCount: number };
-  persona: string;
-  percentile: string;
-}
-
-// ============================================================================
-// DIALOGUE TEMPLATES - Personalized & Randomized
-// ============================================================================
-interface DialogueTemplate {
-  base: string;
-  variants: string[];
-  dynamic?: (stats: UserStats) => string;
-}
-
-const dialogueTemplates: Record<string, DialogueTemplate> = {
-  awakening: {
-    base: "In the year 2025, among millions of voices in the decentralized cosmos...",
-    variants: [
-      (stats: UserStats) => `You are in the **${stats.percentile}** with **${stats.totalCasts}** casts.`,
-      (stats: UserStats) => `Your presence resonates - **${stats.totalCasts}** casts, **${stats.followerCount}** followers.`,
-      (stats: UserStats) => `Among the elite **${stats.percentile}**, you've made your mark.`,
-    ] as any,
-    dynamic: (stats) => `You emerged as **${stats.percentile}** - a force to be reckoned with.`
-  },
-  journey: {
-    base: "Every wanderer finds a place to call home. Your path led you here...",
-    variants: [
-      (stats: UserStats) => `Your sanctuary is **/${stats.topChannel.id}** - **${stats.topChannel.castsInChannel}** moments shared.`,
-      (stats: UserStats) => `In **/${stats.topChannel.id}**, you've found your tribe - **${stats.topChannel.castsInChannel}** casts deep.`,
-      (stats: UserStats) => `**/${stats.topChannel.id}** is where your voice matters most - **${stats.topChannel.castsInChannel}** times over.`,
-    ] as any,
-    dynamic: (stats) => `Your home is **/${stats.topChannel.id}** with **${stats.topChannel.castsInChannel}** casts.`
-  },
-  voice: {
-    base: "Your words echoed across the network.",
-    variants: [
-      (stats: UserStats) => `**${stats.topCast.likes}** hearts resonated with your most powerful message.`,
-      (stats: UserStats) => `Your voice reached **${stats.topCast.likes}** souls - **${stats.topCast.recasts}** amplified it further.`,
-      (stats: UserStats) => `One cast, **${stats.topCast.likes}** connections made. This is your legacy.`,
-    ] as any,
-    dynamic: (stats) => `Your words reached **${stats.topCast.likes}** hearts.`
-  },
-  nakama: {
-    base: "No hero walks alone. You found your companions in the digital realm...",
-    variants: [
-      (stats: UserStats) => `**@${stats.closestFriend.username}** - your closest ally. **${stats.closestFriend.interactionCount}** conversations that matter.`,
-      (stats: UserStats) => `In **@${stats.closestFriend.username}**, you found your nakama. **${stats.closestFriend.interactionCount}** moments of connection.`,
-      (stats: UserStats) => `**@${stats.closestFriend.username}** knows you best - **${stats.closestFriend.interactionCount}** exchanges of trust.`,
-    ] as any,
-    dynamic: (stats) => `Your closest ally is **@${stats.closestFriend.username}** - **${stats.closestFriend.interactionCount}** conversations deep.`
-  },
-  power: {
-    base: "Your generosity knows no bounds.",
-    variants: [
-      (stats: UserStats) => `**${stats.followerCount}** followers trust your vision. You follow **${stats.followingCount}** builders.`,
-      (stats: UserStats) => `Your influence spans **${stats.followerCount}** connections. You're connected to **${stats.followingCount}** minds.`,
-      (stats: UserStats) => `**${stats.followerCount}** believe in you. You believe in **${stats.followingCount}** others.`,
-    ] as any,
-    dynamic: (stats) => `**${stats.followerCount}** followers, **${stats.followingCount}** following - your network is your power.`
-  },
-  persona: {
-    base: "After all your adventures, this is who you truly are...",
-    variants: [
-      (stats: UserStats) => `You are **${stats.persona}** - ${stats.bio || "forever building, forever learning."}`,
-      (stats: UserStats) => `**${stats.persona}** is your essence. ${stats.bio || "Your story continues..."}`,
-      (stats: UserStats) => `The world knows you as **${stats.persona}**. ${stats.bio || "And that's just the beginning."}`,
-    ] as any,
-    dynamic: (stats) => `You are **${stats.persona}** - ${stats.bio || "a force in the Farcaster ecosystem."}`
-  }
-};
-
-// Seeded random function for deterministic randomization per user
-const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
-};
-
-// Get personalized dialogue
-const getPersonalizedDialogue = (
-  chapterId: string,
-  stats: UserStats | null,
-  seed: number = 0
-): string => {
-  const template = dialogueTemplates[chapterId];
-  if (!template) return "";
-
-  if (!stats) return template.base;
-
-  // Use dynamic if available
-  if (template.dynamic) {
-    return template.dynamic(stats);
-  }
-
-  // Pick variant based on seeded random
-  const variantIndex = Math.floor(seededRandom(seed + stats.fid) * template.variants.length);
-  const variant = template.variants[variantIndex] as any;
-
-  if (typeof variant === "function") {
-    return (variant as (stats: UserStats) => string)(stats);
-  }
-  return String(variant);
-};
-
-// ============================================================================
-// SLIDE DATA - The Farcaster 6 (Visual Novel Chapters)
-// ============================================================================
-interface SlideData {
-  id: string;
-  chapter: string;
-  title: string;
-  titleJp: string;
-  background: string;
-  mainStat: string;
-  dialogue: string;
-  subText: string;
-  icon: typeof Trophy;
-  overlay: string;
-  kenBurns: {
-    initial: { scale: number; x: string; y: string };
-    animate: { scale: number; x: string; y: string };
-  };
-}
-
-// Generate slides based on user stats (or use defaults)
-const generateSlidesData = (stats: UserStats | null): SlideData[] => [
-  {
-    id: "intro",
-    chapter: "CHAPTER 1",
-    title: "The Awakening",
-    titleJp: "目覚め",
-    background: "/images/bg-intro.png",
-    mainStat: stats?.percentile || "Top 5%",
-    dialogue: getPersonalizedDialogue("awakening", stats, 1),
-    subText: stats ? `${stats.totalCasts} casts and counting. You emerged as one of the most active.` : "You emerged as one of the most active casters.",
-    icon: Trophy,
-    overlay: "from-indigo-900/60 via-transparent to-purple-900/40",
-    kenBurns: {
-      initial: { scale: 1.1, x: "0%", y: "0%" },
-      animate: { scale: 1.2, x: "-5%", y: "-3%" }
-    }
-  },
-  {
-    id: "channel",
-    chapter: "CHAPTER 2",
-    title: "The Journey",
-    titleJp: "旅路",
-    background: "/images/bg-channel.png",
-    mainStat: stats?.topChannel?.id ? `/${stats.topChannel.id}` : "/base",
-    dialogue: getPersonalizedDialogue("journey", stats, 2),
-    subText: stats?.topChannel ? `${stats.topChannel.castsInChannel} casts in your favorite channel.` : "420 casts in your favorite channel.",
-    icon: Hash,
-    overlay: "from-orange-900/50 via-transparent to-rose-900/40",
-    kenBurns: {
-      initial: { scale: 1.0, x: "0%", y: "0%" },
-      animate: { scale: 1.15, x: "3%", y: "-2%" }
-    }
-  },
-  {
-    id: "top_cast",
-    chapter: "CHAPTER 3",
-    title: "The Voice",
-    titleJp: "声",
-    background: "/images/bg-cast.png",
-    mainStat: stats?.topCast?.likes ? stats.topCast.likes.toLocaleString() : "892",
-    dialogue: getPersonalizedDialogue("voice", stats, 3),
-    subText: "Your words echoed across the network.",
-    icon: Star,
-    overlay: "from-emerald-900/50 via-transparent to-teal-900/40",
-    kenBurns: {
-      initial: { scale: 1.15, x: "-3%", y: "0%" },
-      animate: { scale: 1.25, x: "2%", y: "-4%" }
-    }
-  },
-  {
-    id: "squad",
-    chapter: "CHAPTER 4",
-    title: "The Nakama",
-    titleJp: "仲間",
-    background: "/images/bg-squad.png",
-    mainStat: stats?.closestFriend?.username ? `@${stats.closestFriend.username}` : "@dwr",
-    dialogue: getPersonalizedDialogue("nakama", stats, 4),
-    subText: stats?.closestFriend ? `${stats.closestFriend.interactionCount} conversations with your closest ally.` : "45 conversations with your closest ally.",
-    icon: Users,
-    overlay: "from-blue-900/50 via-transparent to-cyan-900/40",
-    kenBurns: {
-      initial: { scale: 1.0, x: "0%", y: "-5%" },
-      animate: { scale: 1.1, x: "-2%", y: "0%" }
-    }
-  },
-  {
-    id: "degen",
-    chapter: "CHAPTER 5",
-    title: "Power Level",
-    titleJp: "力",
-    background: "/images/bg-degen.png",
-    mainStat: stats?.followerCount ? stats.followerCount.toLocaleString() : "69,420",
-    dialogue: getPersonalizedDialogue("power", stats, 5),
-    subText: stats ? `Following ${stats.followingCount.toLocaleString()} builders across the realm.` : "Tipped to creators across the realm.",
-    icon: Zap,
-    overlay: "from-violet-900/70 via-fuchsia-900/30 to-purple-900/50",
-    kenBurns: {
-      initial: { scale: 1.2, x: "5%", y: "0%" },
-      animate: { scale: 1.3, x: "-3%", y: "-5%" }
-    }
-  },
-  {
-    id: "persona",
-    chapter: "FINAL CHAPTER",
-    title: "True Identity",
-    titleJp: "本性",
-    background: "/images/bg-persona.png",
-    mainStat: stats?.persona || "The Builder",
-    dialogue: getPersonalizedDialogue("persona", stats, 6),
-    subText: stats?.bio?.slice(0, 60) || "Always shipping, rarely sleeping.",
-    icon: Crown,
-    overlay: "from-rose-900/50 via-transparent to-amber-900/40",
-    kenBurns: {
-      initial: { scale: 1.0, x: "0%", y: "0%" },
-      animate: { scale: 1.15, x: "0%", y: "-5%" }
-    }
-  }
-];
-
-// ============================================================================
-// TYPEWRITER COMPONENT - Fixed for stable height
-// ============================================================================
-const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    setDisplayedText("");
-    setStarted(false);
-    const startTimeout = setTimeout(() => setStarted(true), delay);
-    return () => clearTimeout(startTimeout);
-  }, [text, delay]);
-
-  useEffect(() => {
-    if (!started) return;
-    if (displayedText.length < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText(text.slice(0, displayedText.length + 1));
-      }, 25);
-      return () => clearTimeout(timeout);
-    }
-  }, [displayedText, text, started]);
-
-  const isComplete = displayedText.length === text.length;
-
-  return (
-    <span className="whitespace-pre-wrap">
-      {displayedText}
-      {!isComplete && (
-        <motion.span
-          animate={{ opacity: [1, 0] }}
-          transition={{ duration: 0.4, repeat: Infinity }}
-          className="inline-block w-0.5 h-4 bg-cyan-300 ml-0.5 align-middle"
-        />
-      )}
-    </span>
-  );
-};
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 export default function ReplayCasterAnime() {
@@ -334,6 +60,9 @@ export default function ReplayCasterAnime() {
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Generate slidesData based on userStats
   const slidesData = generateSlidesData(userStats);
@@ -350,8 +79,40 @@ export default function ReplayCasterAnime() {
     if (typeof window !== "undefined") {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    return () => { audioContextRef.current?.close(); };
+    // Initialize background music
+    bgMusicRef.current = new Audio("/Replaycaster-2025.mp3");
+    bgMusicRef.current.loop = true;
+    bgMusicRef.current.volume = 0.25; // Balanced with SFX
+    
+    return () => { 
+      audioContextRef.current?.close();
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
+      }
+    };
   }, []);
+
+  // Music control functions
+  const playMusic = useCallback(() => {
+    if (bgMusicRef.current) {
+      bgMusicRef.current.play().then(() => {
+        setIsMusicPlaying(true);
+      }).catch(err => console.log("Music autoplay blocked:", err));
+    }
+  }, []);
+
+  const toggleMusic = useCallback(() => {
+    if (!bgMusicRef.current) return;
+    
+    if (isMuted) {
+      bgMusicRef.current.volume = 0.25;
+      setIsMuted(false);
+    } else {
+      bgMusicRef.current.volume = 0;
+      setIsMuted(true);
+    }
+  }, [isMuted]);
 
   // Fetch user stats when context is available
   useEffect(() => {
@@ -495,65 +256,62 @@ export default function ReplayCasterAnime() {
   }, [context, slidesData]);
 
   // Download share image
-  const downloadImage = useCallback(() => {
+  const downloadImage = useCallback(async () => {
     if (!shareImageUrl) {
       console.error("No image URL available");
       return;
     }
     
     try {
-      // Method 1: Direct download via data URL
+      // Convert data URL to Blob
+      const response = await fetch(shareImageUrl);
+      const blob = await response.blob();
+      const filename = `replaycaster-2025-${context?.user?.username || "share"}.png`;
+      
+      // Try Web Share API first (works great on mobile/Mini Apps)
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], filename, { type: "image/png" });
+        const shareData = { files: [file] };
+        
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          console.log("Shared via Web Share API");
+          return;
+        }
+      }
+      
+      // Fallback: Direct download via anchor element
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = `replaycaster-2025-${context?.user?.username || "share"}.png`;
-      link.href = shareImageUrl;
+      link.download = filename;
+      link.href = blobUrl;
+      link.style.display = "none";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
+      // Clean up blob URL
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      
       console.log("Download initiated successfully");
     } catch (error) {
       console.error("Download failed:", error);
-      
-      // Method 2: Fallback - Open in new tab
-      try {
-        const newTab = window.open(shareImageUrl, "_blank");
-        if (!newTab) {
-          alert("Please allow pop-ups to download the image");
-        }
-      } catch (fallbackError) {
-        console.error("Fallback download also failed:", fallbackError);
-        alert("Unable to download image. Please try again.");
-      }
+      alert("Long press on the image above to save it.");
     }
   }, [shareImageUrl, context]);
 
   // Share to Warpcast
   const shareToWarpcast = useCallback(() => {
     const personaSlide = slidesData.find((s: SlideData) => s.id === "persona");
-    const text = encodeURIComponent(`Just finished my Farcaster Replay 2025! 🎬✨\n\nI'm "${personaSlide?.mainStat || "The Builder"}" - what's your persona?\n\nCheck yours at frames.replaycaster.xyz`);
+    const text = encodeURIComponent(`Just finished my Farcaster Replay 2025! 🎬✨\n\nI'm "${personaSlide?.mainStat || "The Builder"}" - what's your persona?\n\nCheck yours: https://farcaster.xyz/miniapps/3Bv_v1NlYHZz/farcaster-replay-2025`);
     const url = `https://warpcast.com/~/compose?text=${text}`;
     sdk.actions.openUrl(url);
   }, [slidesData]);
 
-  // Sound Effect - Anime "whoosh" style
-  const playSound = (freq: number, duration: number) => {
-    if (!audioContextRef.current) return;
-    const ctx = audioContextRef.current;
-    if (ctx.state === "suspended") ctx.resume();
-    
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + duration);
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + duration);
-  };
+  // Sound Effect - Use imported playSound function
+  const playSoundEffect = useCallback((type: "next" | "prev" | "start" | "impact") => {
+    playSound(audioContextRef.current, type);
+  }, []);
 
   // Navigation with flash transition
   const navigate = (direction: "next" | "prev") => {
@@ -566,7 +324,7 @@ export default function ReplayCasterAnime() {
     if (!canNavigate) return;
 
     setIsTransitioning(true);
-    playSound(direction === "next" ? 800 : 600, 0.15);
+    playSoundEffect(direction);
     
     setTimeout(() => {
       setCurrentIndex(prev => direction === "next" ? prev + 1 : prev - 1);
@@ -714,7 +472,8 @@ export default function ReplayCasterAnime() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
-              playSound(1000, 0.2);
+              playSoundEffect("start");
+              playMusic();
               setShowIntro(false);
             }}
             className="mt-12 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/30 rounded-full font-body font-bold text-white flex items-center gap-3 dialog-glow"
@@ -784,17 +543,31 @@ export default function ReplayCasterAnime() {
 
       {/* ===== TOP: EPISODE INDICATOR ===== */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 sm:px-6" style={{ paddingTop: 'calc(env(safe-area-inset-top, 12px) + 8px)' }}>
-        <div className="flex gap-1.5 w-full max-w-md mx-auto">
-          {slidesData.map((_, i) => (
-            <div key={i} className="h-1 flex-1 bg-black/30 backdrop-blur-sm rounded-full overflow-hidden border border-white/10">
-              <motion.div
-                className="h-full bg-white shadow-sm"
-                initial={{ width: "0%" }}
-                animate={{ width: i <= currentIndex ? "100%" : "0%" }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              />
-            </div>
-          ))}
+        <div className="flex items-center gap-3 w-full max-w-md mx-auto">
+          <div className="flex gap-1.5 flex-1">
+            {slidesData.map((_, i) => (
+              <div key={i} className="h-1 flex-1 bg-black/30 backdrop-blur-sm rounded-full overflow-hidden border border-white/10">
+                <motion.div
+                  className="h-full bg-white shadow-sm"
+                  initial={{ width: "0%" }}
+                  animate={{ width: i <= currentIndex ? "100%" : "0%" }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                />
+              </div>
+            ))}
+          </div>
+          {/* Music Toggle Button */}
+          <button
+            onClick={toggleMusic}
+            className="p-2 bg-black/40 backdrop-blur-sm rounded-full border border-white/20 hover:bg-black/60 transition-colors"
+            aria-label={isMuted ? "Unmute music" : "Mute music"}
+          >
+            {isMuted ? (
+              <VolumeX size={16} className="text-white/70" />
+            ) : (
+              <Volume2 size={16} className="text-white/70" />
+            )}
+          </button>
         </div>
       </div>
 

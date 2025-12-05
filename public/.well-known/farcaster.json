@@ -8,7 +8,7 @@
     "version": "1",
     "name": "Farcaster Replay 2025",
     "iconUrl": "https://farcaster-replay.vercel.app/replaycaster-logo.png",
-    "homeUrl": "https://farcaster-replay.vercel.app/",
+    "homeUrl": "https://farcaster-replay.vercel.app",
     "splashImageUrl": "https://farcaster-replay.vercel.app/replaycaster-logo.png",
     "splashBackgroundColor": "#050505",
     "subtittle": "Your 2025 Farcaster journey",

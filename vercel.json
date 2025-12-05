@@ -1,8 +1,0 @@
-{
-  "productionBranch": "main",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "env": {
-    "NEYNAR_API_KEY": "@neynar_api_key"
-  }
-}

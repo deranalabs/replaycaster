@@ -15,8 +15,13 @@
     "splashBackgroundColor": "#050505",
     "subtitle": "Your 2025 Farcaster journey",
     "description": "A cinematic visual novel experience showcasing your Farcaster year - stats, top casts, favorite channels, and your unique persona.",
-    "screenshotUrls": [],
+    "screenshotUrls": [
+      "https://farcaster-replay.vercel.app/screenshot-1.png",
+      "https://farcaster-replay.vercel.app/screenshot-2.png",
+      "https://farcaster-replay.vercel.app/screenshot-3.png"
+    ],
     "category": "entertainment",
-    "tags": ["wrapped", "stats", "2025", "replay", "visual-novel"]
+    "tags": ["wrapped", "stats", "2025", "replay", "visual-novel"],
+    "requiredCapabilities": ["actions.signIn"]
   }
 }

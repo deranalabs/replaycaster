@@ -16,9 +16,14 @@ export const metadata: Metadata = {
   title: "Farcaster Replay 2025",
   description: "Explore your 2025 Farcaster year in review with interactive slides and statistics",
   icons: {
-    icon: "/replaycaster2025.png",
-    shortcut: "/replaycaster2025.png",
-    apple: "/replaycaster2025.png",
+    icon: "/replaycaster-logo.png",
+    shortcut: "/replaycaster-logo.png",
+    apple: "/replaycaster-logo.png",
+  },
+  openGraph: {
+    title: "Farcaster Replay 2025",
+    description: "Discover your Farcaster story - stats, casts, channels, and persona",
+    images: ["/replaycaster-logo.png"],
   },
 };
 
